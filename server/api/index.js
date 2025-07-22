@@ -1,7 +1,5 @@
 const { Router } = require("express");
-const User = require("../models/User");
-const Deposit = require("../models/Deposit");
-const Transaction = require("../models/Transaction");
+const prisma = require("../prisma");
 const cashStore = require("../cashStore");
 const papi = require("../papi");
 const R = require("ramda");
@@ -11,7 +9,11 @@ const data = require("./data");
 const m = (app) => {
   router.post("/join", async (req, res) => {
     var payeer = req.body.payeer;
-    if (await User.exists({ payeer })) {
+    const existingUser = await prisma.user.findUnique({
+      where: { payeer }
+    });
+    
+    if (existingUser) {
       req.session = { payeer };
       app.render(req, res, "");
       res.redirect("/dashboard");
@@ -29,13 +31,16 @@ const m = (app) => {
       //   });
       // }
 
-      var user = new User({ payeer });
-
+      const userData = { payeer };
+      
       if (!R.isNil(req.session.referer)) {
-        user.referer = req.session.referer;
+        userData.referer = req.session.referer;
       }
 
-      await user.save();
+      await prisma.user.create({
+        data: userData
+      });
+      
       req.session = { payeer };
       // app.render(req, res, "/dashboard");
       
@@ -58,37 +63,44 @@ router.post("/deposit", async (req, res) => {
   var payeer = req.session.payeer;
   var amount = req.body.amount;
 
-  var tr = new Transaction({
-    payeer: payeer,
-    amount: amount,
-    type: "deposit",
-    status: "pending",
+  const transaction = await prisma.transaction.create({
+    data: {
+      payeer: payeer,
+      amount: parseFloat(amount),
+      type: "deposit",
+      status: "pending"
+    }
   });
-  tr = await tr.save();
 
-
-  var result = await papi.makeInvoice(amount, tr.id);
+  var result = await papi.makeInvoice(amount, transaction.id);
   var { url } = result;
   res.redirect(url);
 });
 
 router.post("/withdraw", async (req, res) => {
   var payeer = req.session.payeer;
-  var id = req.body.id;
+  var id = parseInt(req.body.id);
 
-  var deposit = await Deposit.findById(id);
+  const deposit = await prisma.deposit.findUnique({
+    where: { id }
+  });
+  
   var profit = deposit.profit;
-  deposit.closed = true;
-  await deposit.save();
-
-  var transaction = new Transaction({
-    payeer,
-    amount: profit,
-    type: "withdraw",
-    status: "successful",
+  
+  await prisma.deposit.update({
+    where: { id },
+    data: { closed: true }
   });
 
-  transaction = await transaction.save();
+  const transaction = await prisma.transaction.create({
+    data: {
+      payeer,
+      amount: profit,
+      type: "withdraw",
+      status: "successful"
+    }
+  });
+
   cashStore.pay(profit);
 
   // todo transfer funds to payeer

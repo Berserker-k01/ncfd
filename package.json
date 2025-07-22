@@ -15,7 +15,7 @@
     "keygrip": "^1.1.0",
     "moment": "^2.27.0",
     "moment-duration-format": "^2.3.2",
-    "mongoose": "^5.9.26",
+    "@prisma/client": "^4.6.0",
     "next": "^9.5.1",
     "qs": "^6.9.4",
     "ramda": "^0.27.1",
@@ -29,10 +29,17 @@
   "scripts": {
     "dev": "nodemon server",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "db:init": "node scripts/init-database.js",
+    "db:migrate-from-mongo": "node scripts/migrate-mongo-to-postgres.js"
   },
   "devDependencies": {
-    "nodemon": "^2.0.4"
+    "mongodb": "^4.13.0",
+    "nodemon": "^2.0.4",
+    "prisma": "^4.6.0"
   },
   "nodemonConfig": {
     "ignore": [

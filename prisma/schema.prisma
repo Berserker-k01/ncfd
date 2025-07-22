@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  payeer    String      @unique
+  joined    DateTime    @default(now())
+  balance   Float       @default(0)
+  referid   String      @default(uuid())
+  referer   String?
+  deposits  Deposit[]
+  transactions Transaction[]
+  // Relations for referer
+  referredBy User?  @relation("Referrals", fields: [referer], references: [referid])
+  referrals  User[] @relation("Referrals")
+}
+
+model Deposit {
+  id        Int      @id @default(autoincrement())
+  payeer    String
+  created   DateTime @default(now())
+  end       DateTime @default(dbgenerated("NOW() + interval '1 day'"))
+  amount    Float    @default(0)
+  profit    Float    @default(0)
+  closed    Boolean  @default(false)
+  user      User     @relation(fields: [payeer], references: [payeer])
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  payeer    String
+  created   DateTime @default(now())
+  amount    Float    @default(0)
+  status    String?
+  type      String?
+  user      User     @relation(fields: [payeer], references: [payeer])
+}
+
+model Commission {
+  id        Int      @id @default(autoincrement())
+  payeer    String
+  referer   String
+  created   DateTime @default(now())
+  amount    Float    @default(0)
+  profit    Float    @default(0)
+}

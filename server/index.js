@@ -7,21 +7,16 @@ var config = require("../config.json");
 var payeerControler = require("./payeerControler");
 var api = require("./api");
 var { auth } = require("./middlewares");
-var mongoose = require("mongoose");
+var prisma = require("./prisma");
 
-mongoose
-  .connect(config.db, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-    authSource: "admin",
-    poolSize: 10, // Maintain up to 10 socket connections
-    // If not connected, return errors immediately rather than waiting for reconnect
-    bufferMaxEntries: 0,
-    useUnifiedTopology: true,
+// Test the connection to PostgreSQL
+prisma.$connect()
+  .then(() => {
+    console.log("PostgreSQL connection has been established successfully with Prisma.");
   })
-  .then(console.log("connected"))
-  .catch(console.error);
+  .catch(err => {
+    console.error("Unable to connect to the database:", err);
+  });
 
 const next = require("next");
 
