@@ -98,9 +98,52 @@ yarn prisma:studio
 yarn db:init
 ```
 
+## Déploiement sur Render
+
+Vous pouvez déployer facilement cette application sur Render en suivant ces étapes :
+
+### Méthode 1 : Déploiement en un clic
+
+1. Assurez-vous que votre dépôt est sur GitHub
+2. Connectez-vous à votre compte Render sur [https://dashboard.render.com](https://dashboard.render.com)
+3. Allez dans **Blueprints** et cliquez sur **New Blueprint Instance**
+4. Sélectionnez votre dépôt GitHub contenant le projet
+5. Render va automatiquement détecter le fichier `render.yaml` et vous proposer de déployer les services définis
+6. Validez le déploiement et attendez que Render termine la mise en place
+
+### Méthode 2 : Déploiement manuel
+
+1. Connectez-vous à votre compte Render sur [https://dashboard.render.com](https://dashboard.render.com)
+2. Créez une nouvelle base de données PostgreSQL :
+   - Allez dans **New > PostgreSQL**
+   - Nommez-la `ncfd-db`
+   - Choisissez la région la plus proche de vous
+   - Sélectionnez le plan que vous préférez
+   - Cliquez sur **Create Database**
+
+3. Créez un nouveau service Web :
+   - Allez dans **New > Web Service**
+   - Connectez votre compte GitHub
+   - Sélectionnez votre dépôt
+   - Nommez le service `ncfd-app`
+   - Laissez la racine sur `/`
+   - Définissez la commande de construction : `yarn install && yarn prisma:generate && yarn build`
+   - Définissez la commande de démarrage : `yarn start`
+   - Sélectionnez le plan que vous préférez
+   - Ajoutez la variable d'environnement `DATABASE_URL` en utilisant la chaîne de connexion de votre base de données PostgreSQL créée à l'étape 2
+   - Cliquez sur **Create Web Service**
+
+4. Votre application sera déployée et accessible à l'URL fournie par Render.
+
+### Notes importantes pour le déploiement
+
+- La première construction peut prendre plusieurs minutes
+- Les migrations Prisma s'exécuteront automatiquement lors du déploiement
+- Si vous rencontrez des problèmes de connexion à la base de données, vérifiez que l'URL dans la variable d'environnement `DATABASE_URL` est correcte
+
 ## Would you like to contribute?
 - [ ] We need a better UI design. a feature to have multiple themes to easily select in the config would be nice.
-- [ ] Multi language support would be great.
+- [ ] More payment methods/gateways to be added.
 - [ ] error handling 
 - [ ] documentation
 

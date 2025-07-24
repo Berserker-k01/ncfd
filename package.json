@@ -9,6 +9,7 @@
     "compression": "^1.7.4",
     "cookie-session": "^1.4.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "formik": "^2.1.5",
     "fs-extra": "^9.0.1",
@@ -29,7 +30,7 @@
   "scripts": {
     "dev": "nodemon server",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "node -r dotenv/config scripts/start.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
