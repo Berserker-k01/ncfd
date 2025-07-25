@@ -5,8 +5,8 @@ services:
     env: node
     runtime: node
     nodeVersion: 16
-    buildCommand: yarn install --no-frozen-lockfile && yarn prisma:generate && yarn build
-    startCommand: yarn start
+    buildCommand: yarn install --no-frozen-lockfile && yarn prisma:generate && NODE_OPTIONS=--openssl-legacy-provider yarn build
+    startCommand: NODE_OPTIONS=--openssl-legacy-provider yarn start
     envVars:
       - key: NODE_ENV
         value: production
