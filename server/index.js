@@ -19,21 +19,30 @@ prisma.$connect()
     console.error("Unable to connect to the database:", err);
   });
   
-// Gestion facultative de MongoDB pour les composants legacy
-if (process.env.MONGODB_URI) {
-  // Suppression de l'avertissement sur strictQuery
-  mongoose.set('strictQuery', true);
-  
+// Gestion de MongoDB pour les composants legacy
+// Configuration des options de connexion MongoDB avec timeout réduit
+mongoose.set('strictQuery', true); // Suppression de l'avertissement
+mongoose.set('bufferTimeoutMS', 2000); // Réduit le timeout des opérations en buffer à 2 secondes
+
+// Vérification de la variable d'environnement MONGODB_URI
+const useMongoDB = process.env.MONGODB_URI ? true : false;
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/ncfd";
+
+if (useMongoDB) {
   console.log("Tentative de connexion à MongoDB pour les composants legacy...");
-  mongoose.connect(process.env.MONGODB_URI, {
+  mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // Timeout rapide pour la sélection du serveur
+    connectTimeoutMS: 5000,         // Timeout rapide pour la connexion
+    socketTimeoutMS: 5000           // Timeout rapide pour les opérations socket
   })
   .then(() => {
     console.log("MongoDB connection established for legacy components.");
   })
   .catch(err => {
-    console.log("MongoDB non disponible - certaines fonctionnalités legacy pourraient ne pas fonctionner.");
+    console.log("Erreur de connexion MongoDB - passage en mode PostgreSQL uniquement.");
+    console.log("Les fonctionnalités utilisant MongoDB seront indisponibles.");
   });
 } else {
   console.log("Variable MONGODB_URI non définie - fonctionnement en mode PostgreSQL uniquement.");

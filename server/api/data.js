@@ -1,4 +1,7 @@
 const { Router } = require("express");
+// Import Prisma client au lieu des modèles Mongoose
+const prisma = require("../prisma");
+// Conservation des imports existants pour compatibilité temporaire
 const User = require("../models/User");
 const Commition = require("../models/Commition");
 const Deposit = require("../models/Deposit");
@@ -14,7 +17,20 @@ const commons = async (req, res) => {
   var loggedin, user;
   if (payeer) {
     loggedin = true;
-    user = await User.findOne({ payeer });
+    try {
+      // Essayer d'utiliser Prisma en premier
+      user = await prisma.user.findUnique({
+        where: { payeer: payeer }
+      });
+      // Si Prisma échoue et que MongoDB est disponible, utiliser Mongoose comme fallback
+      if (!user && User.findOne) {
+        user = await User.findOne({ payeer });
+      }
+    } catch (error) {
+      console.log("Erreur lors de la récupération de l'utilisateur:", error);
+      user = undefined;
+      loggedin = false;
+    }
   } else {
     loggedin = false;
     user = undefined;
@@ -27,19 +43,36 @@ const commons = async (req, res) => {
 router.get("/index", async (req, res) => {
   var payeer = req.session.payeer;
   var { user, loggedin, message } = await commons(req, res);
-  var operations_withdrawal = await Transaction.find({
-    status: "successful",
-    type: { $in: ["withdraw", "commition"] },
-  })
-    .sort({ created: -1 })
-    .limit(40);
+  
+  // Utilisation de Prisma pour les retraits
+  var operations_withdrawal = [];
+  try {
+    operations_withdrawal = await prisma.transaction.findMany({
+      where: {
+        status: "successful",
+        type: { in: ["withdraw", "commition"] }
+      },
+      orderBy: { created: 'desc' },
+      take: 40
+    });
+  } catch (error) {
+    console.log("Erreur Prisma pour operations_withdrawal:", error);
+  }
 
-  var operations_deposit = await Transaction.find({
-    status: "successful",
-    type: "deposit",
-  })
-    .sort({ created: -1 })
-    .limit(40);
+  // Utilisation de Prisma pour les dépôts
+  var operations_deposit = [];
+  try {
+    operations_deposit = await prisma.transaction.findMany({
+      where: {
+        status: "successful",
+        type: "deposit"
+      },
+      orderBy: { created: 'desc' },
+      take: 40
+    });
+  } catch (error) {
+    console.log("Erreur Prisma pour operations_deposit:", error);
+  }
 
   var users = await User.countDocuments();
 
@@ -112,6 +145,34 @@ router.get("/deposit", auth.api, async (req, res) => {
   var latestdeposits = await Deposit.find({ payeer })
     .sort({ created: -1 })
     .limit(20);
+
+  // Comptage des utilisateurs avec Prisma
+  var users = 0;
+  try {
+    users = await prisma.user.count();
+  } catch (error) {
+    console.log("Erreur Prisma pour le comptage d'utilisateurs:", error);
+    // Fallback sur Mongoose si disponible
+    if (User.countDocuments) {
+      users = await User.countDocuments();
+    }
+  }
+
+  // Récupération du dernier dépôt avec Prisma
+  var last_deposit = null;
+  try {
+    const lastDeposits = await prisma.transaction.findMany({
+      where: {
+        type: "deposit",
+        status: "successful"
+      },
+      orderBy: { created: 'desc' },
+      take: 1
+    });
+    last_deposit = lastDeposits.length > 0 ? lastDeposits[0] : null;
+  } catch (error) {
+    console.log("Erreur Prisma pour le dernier dépôt:", error);
+  }
 
   res.json({
     success: true,
@@ -200,15 +261,38 @@ router.get("/referal", auth.api, async (req, res) => {
 router.get("/transactions", auth.api, async (req, res) => {
   var payeer = req.session.payeer;
   var { user, loggedin, message } = await commons(req, res);
-  var _transactions = await Transaction.find({ payeer });
-
-  var transactions = await Transaction.find({ payeer })
-    .sort({ created: -1 })
-    .limit(40);
+  
+  // Utiliser Prisma pour les transactions
+  var _transactions = [];
+  var transactions = [];
+  try {
+    // Récupérer toutes les transactions pour calculer la somme
+    _transactions = await prisma.transaction.findMany({
+      where: { payeer: payeer }
+    });
+    
+    // Récupérer les transactions limitées et triées
+    transactions = await prisma.transaction.findMany({
+      where: { payeer: payeer },
+      orderBy: { created: 'desc' },
+      take: 40
+    });
+  } catch (error) {
+    console.log("Erreur Prisma pour les transactions:", error);
+  }
 
   var payout_sum = R.reduce((acc, next) => acc + next.amount, 0, _transactions);
-
-  var deps = await Deposit.find({ payeer });
+  
+  // Utiliser Prisma pour les dépôts
+  var deps = [];
+  try {
+    deps = await prisma.deposit.findMany({
+      where: { payeer: payeer }
+    });
+  } catch (error) {
+    console.log("Erreur Prisma pour les dépôts:", error);
+  }
+  
   var deposit_sum = R.reduce((acc, next) => acc + next.amount, 0, deps);
 
   res.json({
