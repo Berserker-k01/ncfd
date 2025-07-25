@@ -19,18 +19,25 @@ prisma.$connect()
     console.error("Unable to connect to the database:", err);
   });
   
-// Connect to MongoDB (required for legacy code during transition)
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/ncfd";
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log("MongoDB connection established for legacy components.");
-})
-.catch(err => {
-  console.error("Warning: Unable to connect to MongoDB for legacy components:", err);
-});
+// Gestion facultative de MongoDB pour les composants legacy
+if (process.env.MONGODB_URI) {
+  // Suppression de l'avertissement sur strictQuery
+  mongoose.set('strictQuery', true);
+  
+  console.log("Tentative de connexion à MongoDB pour les composants legacy...");
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("MongoDB connection established for legacy components.");
+  })
+  .catch(err => {
+    console.log("MongoDB non disponible - certaines fonctionnalités legacy pourraient ne pas fonctionner.");
+  });
+} else {
+  console.log("Variable MONGODB_URI non définie - fonctionnement en mode PostgreSQL uniquement.");
+}
 
 const next = require("next");
 
