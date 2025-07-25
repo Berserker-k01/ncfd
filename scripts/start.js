@@ -20,14 +20,26 @@ async function main() {
     // Déploiement du schéma de base de données
     console.log('🔄 Déploiement du schéma Prisma...');
     try {
-      // Essayer d'abord les migrations standards
-      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-      console.log('✅ Migrations déployées avec succès');
-    } catch (error) {
-      console.log('⚠️ Pas de migrations trouvées, utilisation de prisma db push...');
-      // Si pas de migrations, créer directement les tables à partir du schéma
-      execSync('npx prisma db push --force-reset', { stdio: 'inherit' });
+      // Force la création des tables avec db push (plus direct et fiable)
+      console.log('Génération directe des tables avec prisma db push...');
+      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+      
+      // Régénérer le client Prisma au cas où
+      console.log('Régénération du client Prisma...');
+      execSync('npx prisma generate', { stdio: 'inherit' });
+      
       console.log('✅ Schéma déployé directement avec succès');
+      
+      // Vérification des tables créées
+      console.log('🔍 Vérification des tables créées...');
+      const tables = await prisma.$queryRaw`
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_schema='public' AND table_type='BASE TABLE'
+      `;
+      console.log('Tables dans la base de données:', tables);
+    } catch (error) {
+      console.error('❌ Erreur lors du déploiement du schéma:', error);
+      throw error; // Arrêter le script si le schéma ne peut pas être déployé
     }
 
     // Génération du fichier config.json

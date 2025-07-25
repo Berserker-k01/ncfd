@@ -5,7 +5,7 @@ services:
     env: node
     runtime: node
     nodeVersion: 16
-    buildCommand: yarn install --no-frozen-lockfile && yarn prisma:generate && node scripts/generate-config.js && NODE_OPTIONS=--openssl-legacy-provider npx next build
+    buildCommand: yarn install --no-frozen-lockfile && node scripts/render-build.js
     startCommand: NODE_OPTIONS=--openssl-legacy-provider node scripts/start.js
     envVars:
       - key: NODE_ENV
