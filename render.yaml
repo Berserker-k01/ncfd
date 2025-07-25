@@ -3,7 +3,7 @@ services:
   - type: web
     name: ncfd-app
     env: node
-    buildCommand: yarn install && yarn prisma:generate && yarn build
+    buildCommand: yarn install --no-frozen-lockfile && yarn prisma:generate && npx next build
     startCommand: yarn start
     envVars:
       - key: NODE_ENV
