@@ -16,7 +16,6 @@
     "keygrip": "^1.1.0",
     "moment": "^2.27.0",
     "moment-duration-format": "^2.3.2",
-    "mongoose": "^6.8.0",
     "@prisma/client": "^4.6.0",
     "next": "^9.5.1",
     "qs": "^6.9.4",
@@ -39,7 +38,6 @@
     "db:migrate-from-mongo": "node scripts/migrate-mongo-to-postgres.js"
   },
   "devDependencies": {
-    "mongodb": "^4.13.0",
     "nodemon": "^2.0.4",
     "prisma": "^4.6.0"
   },
