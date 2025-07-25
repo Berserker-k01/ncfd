@@ -5,13 +5,25 @@ services:
     env: node
     runtime: node
     nodeVersion: 16
-    buildCommand: yarn install --no-frozen-lockfile && yarn prisma:generate && NODE_OPTIONS=--openssl-legacy-provider yarn build
+    buildCommand: yarn install --no-frozen-lockfile && yarn prisma:generate && node scripts/generate-config.js && NODE_OPTIONS=--openssl-legacy-provider yarn build
     startCommand: NODE_OPTIONS=--openssl-legacy-provider yarn start
     envVars:
       - key: NODE_ENV
         value: production
       - key: NODE_OPTIONS
         value: --openssl-legacy-provider
+      - key: PAYEER_ACCOUNT
+        value: "" # À remplir dans l'interface Render
+      - key: PAYEER_API_ID
+        value: "" # À remplir dans l'interface Render
+      - key: PAYEER_API_PASS
+        value: "" # À remplir dans l'interface Render
+      - key: PAYEER_M_SHOP
+        value: "" # À remplir dans l'interface Render
+      - key: PAYEER_KEY1
+        value: "default_key1" # À remplacer par votre clé réelle
+      - key: PAYEER_KEY2
+        value: "default_key2" # À remplacer par votre clé réelle
       - key: DATABASE_URL
         fromDatabase:
           name: ncfd-db
