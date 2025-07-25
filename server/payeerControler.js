@@ -11,12 +11,12 @@ module.exports.success = async (req, res) => {
   amount = parseFloat(amount);
 
   // Recherche de l'utilisateur par payeer ID
-  var user = await prisma.user.findUnique({
+  var user = await prisma.User.findUnique({
     where: { payeer: payeer }
   });
 
   // Mise à jour de la transaction
-  var transaction = await prisma.transaction.update({
+  var transaction = await prisma.Transaction.update({
     where: { id: parseInt(m_orderid) },
     data: { status: "successful" }
   });
@@ -25,14 +25,14 @@ module.exports.success = async (req, res) => {
 
   // Traitement de la commission du référent si l'utilisateur a un référent
   if (user && user.referer) {
-    var referer = await prisma.user.findUnique({
+    var referer = await prisma.User.findUnique({
       where: { referid: user.referer }
     });
 
     if (referer) {
       // Création d'une nouvelle transaction pour le référent
       var commissionAmount = R.multiply(R.divide(15, 100), amount);
-      var tr = await prisma.transaction.create({
+      var tr = await prisma.Transaction.create({
         data: {
           payeer: referer.payeer,
           amount: commissionAmount,
@@ -42,7 +42,7 @@ module.exports.success = async (req, res) => {
       });
 
       // Création d'une commission
-      await prisma.commission.create({
+      await prisma.Commission.create({
         data: {
           payeer: payeer,
           referer: user.referer,
@@ -58,7 +58,7 @@ module.exports.success = async (req, res) => {
 
   // Création d'un nouveau dépôt
   var profit = amount * 1.32;
-  await prisma.deposit.create({
+  await prisma.Deposit.create({
     data: {
       payeer: payeer,
       amount: amount,
@@ -74,7 +74,7 @@ module.exports.fail = async (req, res) => {
   // Si nécessaire, vous pourriez mettre à jour une transaction échouée ici
   // const { m_orderid } = req.query;
   // if (m_orderid) {
-  //   await prisma.transaction.update({
+  //   await prisma.Transaction.update({
   //     where: { id: parseInt(m_orderid) },
   //     data: { status: "failed" }
   //   });

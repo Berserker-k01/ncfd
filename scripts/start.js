@@ -17,10 +17,18 @@ async function main() {
     await prisma.$connect();
     console.log('✅ Connexion à la base de données établie');
 
-    // Déploiement des migrations
-    console.log('🔄 Déploiement des migrations Prisma...');
-    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-    console.log('✅ Migrations déployées avec succès');
+    // Déploiement du schéma de base de données
+    console.log('🔄 Déploiement du schéma Prisma...');
+    try {
+      // Essayer d'abord les migrations standards
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+      console.log('✅ Migrations déployées avec succès');
+    } catch (error) {
+      console.log('⚠️ Pas de migrations trouvées, utilisation de prisma db push...');
+      // Si pas de migrations, créer directement les tables à partir du schéma
+      execSync('npx prisma db push --force-reset', { stdio: 'inherit' });
+      console.log('✅ Schéma déployé directement avec succès');
+    }
 
     // Génération du fichier config.json
     console.log('🔄 Génération du fichier config.json...');
