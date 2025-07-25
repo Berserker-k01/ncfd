@@ -89,8 +89,9 @@ app.prepare().then(() => {
   //       app.render(req,req,'index')
   //   })
 
-  server.listen(8000, (err) => {
+  const PORT = process.env.PORT || 8000;
+  server.listen(PORT, (err) => {
     if (err) throw err;
-    console.log("> Ready on http://localhost:3000");
+    console.log(`> Ready on http://localhost:${PORT}`);
   });
 });
